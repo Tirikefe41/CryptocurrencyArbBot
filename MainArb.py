@@ -121,19 +121,27 @@ class Arbitrage:
 	def discountedopportunity(self,maxex, minex, pair, bqty, sp):
 
 		print("Discounting opportunity with fees...")
+
 		token = pair.split('/')[0]
 		maxfees = self.exchanges[maxex].fees
 		minfees = self.exchanges[minex].fees
 
 		purchase_fee = minfees['trading']['maker'] * bqty
 
-		if token in minfees['funding']['withdraw']:
-				withdraw_fee = minfees['funding']['withdraw'][token]
+		# if token in minfees['funding']['withdraw']:
+		# 		 = minfees['funding']['withdraw'][token]
+		# else:
+		# 	withdraw_fee = bqty * 0.002 # Update result from percentage pattern recognition.
+		if minex = 'hitbtc2':
+			withdraw_fee = self.exchanges.currencies[token]['fee']
+		elif token in minfees['funding']['withdraw']:
+			withdraw = minfees['funding']['withdraw'][token]
 		else:
-			withdraw_fee = bqty * 0.002 # Update result from percentage pattern recognition.
+			withdraw_fee = bqty * 0.002
 
+		withdraw_fee = 
 		sqty = bqty - (purchase_fee+withdraw_fee)
-		deposit_fee = 0 #to be modified for dynamism
+		deposit_fee = 0 #to be modified to realtime
 		sell_fee = maxfees['trading']['maker'] * sqty
 
 		new_bal = (sqty - sell_fee) * sp
