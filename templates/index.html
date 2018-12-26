@@ -1,0 +1,124 @@
+<!Doctype Html>
+<html>
+	<head>
+		<meta />
+
+		<title></title>
+
+		<link rel="stylesheet" type="text/css" href="css/index.css" />
+	</head>
+
+	<body>
+		<script type="text/javascript" src="js/index.js"></script>
+
+		<div id="container" class="container">
+			<div class="sidebar">
+				<h1><u>TRADE PARAMETERS</u></h1>
+				<div id="error_msg"></div>
+				<input type="password" name="apikey" id="apikey" value="" placeholder="API REPO password" disabled="disabled" />
+
+				<input type="password" name="apisecret" id="apisecret" value="" placeholder="...." disabled="disabled"/><br/><br/>
+
+				<input type="text" name="buy_percentage" id="buy_percentage" value="" placeholder="..." disabled="disabled" />
+
+				<input type="text" name="percent_range" id="percent_range" value="" placeholder="..." disabled="disabled"/>
+
+				<input type="number" name="sell_percentage" id="sell_percentage" value="" placeholder="MIN PERCENTAGE PER SCAN" min="0.01" max="100" step="0.01" disabled="disabled" onchange="validatePercentageInput()"/>				
+
+				<input type="number" name="fixedbuy" id="fixedbuy" value="" placeholder="AMOUNT PER TRADE (ETH)" min="0.15" max="10000" step="0.001" disabled="disabled" />
+
+				<input type="number" name="max_daily_trades" id="max_daily_trades" value="" placeholder="MAX NUMBER OF TRADES PER DAY" min="1" step="1" disabled="disabled" />
+
+				<button id="settingsBtn" onclick="toogleSettingsBtn()">Edit</button>
+			</div>
+
+			<div class="main">
+				<div class="title-head">
+					<p class="title-header">Trading Logs</p>
+					<button onclick="clearLogs()">Clear Logs</button>
+				</div>
+
+				<div class="logs">
+					<div class="logs_list_info" id="logs_list_info"></div>
+					<table>
+		                <thead>
+		                  <tr>
+		                    <th>Timestamp</th>
+		                    <th>Pair</th>
+		                    <th>Buy Exchange</th>
+		                    <th>Sell Exchange</th>
+		                    <th>Percentage Profit</th>
+		                    <th>Status</th>
+		                  </tr>
+		                </thead>
+		                <tbody id="log_list">
+		                  
+		                </tbody>
+		              </table>
+				</div>
+			</div>
+
+		</div>
+
+		<script type="text/javascript">
+			const TABLE_COLS = ['timestamp', 'pair', 'order_type', 'price', 'amount', 'status'];
+			//instantiaate necessary global variables
+			var container = document.getElementById("container");
+			var settingsBtn = document.getElementById("settingsBtn");
+			var error_msg = document.getElementById("error_msg");
+			var apikey = document.getElementById("apikey");
+			var apisecret = document.getElementById("apisecret");
+			var buy_percentage = document.getElementById("buy_percentage");
+			var sell_percentage = document.getElementById("sell_percentage");
+			var percent_range = document.getElementById("percent_range");
+			var fixedbuy = document.getElementById("fixedbuy");
+			var max_daily_trades = document.getElementById("max_daily_trades");
+			var log_list = document.getElementById("log_list");
+			var logs_list_info = document.getElementById("logs_list_info");
+			
+			//set height to full
+			container.style.height = (0.84*screen.availHeight).toString()+"px";
+			
+			var LOGS = {};
+
+			refreshLogs = function (){
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+						res = this.responseText;
+						console.log(res);
+						lglist = JSON.parse(res);
+						console.log(LOGS, lglist, (lglist==LOGS), JSON.stringify(lglist).length);
+						if(JSON.stringify(LOGS) != JSON.stringify(lglist)){
+							LOGS = lglist;
+
+							logs_list_info.innerHTML = "";
+							log_list_code = "";
+							for(log in lglist){
+								log_list_code += "<tr>";
+							
+								for(x in TABLE_COLS){
+									log_list_code += "<td>"+lglist[log][TABLE_COLS[x]]+"</td>";
+								}
+								log_list_code += "</tr>"
+							}
+							
+							log_list.innerHTML = log_list_code;
+						
+							
+						}else if(JSON.stringify(lglist).length == 2){
+							logs_list_info.innerHTML = "<p>Log is Empty!</p>";
+
+						}
+						
+					}
+				};
+				
+				xhttp.open("GET", "logs.json", true);
+				xhttp.send();
+			}
+
+			interval = setInterval(refreshLogs, 300000);
+		</script>
+	</body>
+</html>
