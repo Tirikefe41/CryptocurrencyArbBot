@@ -152,7 +152,7 @@ class Arbitrage:
 	def trade(self,minex, maxex, pair):
 
 		exchange1 = self.exchanges[minex]
-		exchange2 = self.exchange[maxex]
+		exchange2 = self.exchanges[maxex]
 		sym = pair.split('/')[0]
 
 		price1 = exchange1.fetch_ticker(pair)['ask']
