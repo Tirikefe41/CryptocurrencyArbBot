@@ -1,12 +1,10 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, request, session, abort
 from MainArb import Arbitrage
+from functions import readJson, jsonWrite, jsonAdd
 import json
 import os
 
-
-
 app = Flask(__name__, static_url_path='', static_folder='static')
-
 
 @app.route('/', methods=["POST", "GET"])
 def home():
