@@ -12,7 +12,7 @@ exchanges = {'binance':binance, 'hitbtc2': hitbtc2}
 def reverseTrade(sym, ex):
 	pair = '{}/ETH'.format(sym)
 	exchange = exchanges[ex]
-	amt = exchange.fetch_balance()['free']['sym']
+	amt = exchange.fetch_balance()['free'][sym]
 	price = exchange.fetch_ticker(pair)['ask']
 	buy_amt = exchange.amount_to_precision(pair, (amt/ price))
 	order = exchange.create_order(pair, 'limit', 'sell',buy_amt, price)
