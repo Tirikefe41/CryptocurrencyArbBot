@@ -5,6 +5,7 @@ from fastnumbers import fast_real
 from idex.client import Client
 from credentials import API
 import operator
+import time
 import ccxt
 
 
