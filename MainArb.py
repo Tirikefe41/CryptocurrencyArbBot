@@ -212,7 +212,7 @@ class Arbitrage:
 		print("Selling {} on the high exchange".format(sym))
 
 		sell_price = exchange2.fetch_ticker(pair)['ask']
-		sell_amt = exchange2.amount_to_precision(pair, deposit_bal) * sell_price
+		sell_amt = exchange2.amount_to_precision(pair, deposit_bal)
 		high_order = exchange2.create_order(pair, 'limit', 'sell',sell_amt, sell_price)
 
 		if maxex == 'binance':
