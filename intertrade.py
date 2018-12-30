@@ -1,12 +1,12 @@
 import ccxt
 import time
 
-exchange_dict = {'binance':ccxt.binance({'apiKey': "WvMB68Y1VECVmkpak87xxUr0ioZSxO0oosyhXC2z055B0yjnq7kl4XtuUsoZsY7g",
-						'secret':"iQTQ67XaLXX9UAIZgDYNMCzTHz67OfPr8ScxeHYg45ElbxjeIxXyG5tiHKS55nIv",'enableRateLimit': True,}),
+exchange_dict = {'binance':ccxt.binance({'apiKey': "tcHmjrGfgrAsnFHGwQrxGBlojyKp1qPseKWUGA5j0fpfoWnhSit9NXa6BAMvPf9B",
+						'secret':"sescKSnXti02q1dunzH4VNggI89A88Y6iKjDqEHi92zdTK7rn4DHjm3gJ3gWsZ8L",'enableRateLimit': True,}),
 							'hitbtc2':ccxt.hitbtc2({'apiKey':"a26c7c6d7391d78b8d6eb054a3a0b688", 
 								'secret':"161f90c045f3e8365674f66c38334820", 'enableRateLimit': True,})}
-minex = 'hitbtc2'
-maxex = 'binance'
+minex = 'binance'
+maxex = 'hitbtc2'
 
 
 def trade(pair):
@@ -21,30 +21,37 @@ def trade(pair):
 	low_order = exchange1.create_order(pair, 'limit', 'buy',buy_amt, price1)
 	print('Placed Limit order to buy {} on {}'.format(sym, minex))
 
-	#Generate Destination address.
-	
+	#Generate Destination address.	
 	address = exchange2.fetchDepositAddress(sym)['address']
 	print("Generated deposit address as {}".format(address))
 
-	low_order_stat = exchange1.fetch_order(low_order['id'])
+	#Track Opened order
+	if minex == 'binance':
+		low_order_stat = exchange1.fetch_order( low_order['id'], pair)
+	else:
+		low_order_stat = exchange1.fetch_order(low_order['id'])
 
 	while low_order_stat['status'] != 'closed':
-		low_order_stat = exchange1.fetch_order(low_order['id'])
+		if minex == 'binance':
+			low_order_stat = exchange1.fetch_order( low_order['id'], pair)
+		else:
+			low_order_stat = exchange1.fetch_order(low_order['id'])
 		print("Waiting for order to fill on {}....".format(minex))
 		time.sleep(5)
 
 	print("Bought {} on {}.".format(sym, minex))
 
 	if minex == 'hitbtc2':
-		withdraw_amt = exchange1.fetch_balance()['free'][sym] - exchange1.currencies[sym]['fee']
-		order1 = exchange1.private_post_account_transfer({'currency': sym, 'amount': withdraw_amt, 'type': 'exchangeToBank'})
+		min_bal = exchange1.fetch_balance()['free'][sym]
+		withdraw_amt = min_bal - exchange1.currencies[sym]['fee']
+		order1 = exchange1.private_post_account_transfer({'currency': sym, 'amount': min_bal, 'type': 'exchangeToBank'})
 	else:
 		withdraw_amt = exchange1.fetch_balance()['free'][sym]
 
 	# if minex == 'hitbtc2':
 	# 		#exchange1.payment_post_transfer_to_main ({'amount': withdraw_amt, 'currency_code': sym,})
 			
-
+	print("Initialing withdrawal...")
 	withdrawal = exchange1.withdraw(sym,withdraw_amt,address)
 	print("Withdrawal initated...")
 	time.sleep(60)
@@ -52,13 +59,14 @@ def trade(pair):
 
 	while deposit_status:
 		# confirm new symbol balance
+		print("Confirming Deposit on {}".format(maxex))
 		deposit_bal = exchange2.fetch_balance()['free'][sym]
-		if deposit_bal >= (buy_amt*0.8):
+		if deposit_bal >= (withdraw_amt*0.8):
 			deposit_status = False
 			if maxex == 'hitbtc2':
 				order1 = exchange2.private_post_account_transfer({'currency': sym, 'amount': withdraw_amt, 'type': 'bankToExchange'})
 
-		time.sleep(10)
+		time.sleep(5)
 
 	print('Deposit Successful !')
 	print("Selling {} on the high exchange".format(sym))
@@ -66,10 +74,18 @@ def trade(pair):
 	sell_price = exchange2.fetch_ticker(pair)['ask']
 	sell_amt = exchange2.amount_to_precision(pair, deposit_bal)
 	high_order = exchange2.create_order(pair, 'limit', 'sell',sell_amt, sell_price)
-	high_order_stat = exchange2.fetch_order(high_order['id'])
+
+	if maxex == 'binance':
+		high_order_stat = exchange2.fetch_order(high_order['id'], pair)
+	else:
+		high_order_stat = exchange2.fetch_order(high_order['id'])
+	
 
 	while high_order_stat['status'] != 'closed':
-		high_order_stat = exchange2.fetch_order(high_order['id'])
+		if maxex == 'binance':
+			high_order_stat = exchange2.fetch_order(high_order['id'], pair)
+		else:
+			high_order_stat = exchange2.fetch_order(high_order['id'])
 		print("Waiting for order to fill on {}....".format(maxex))
 		time.sleep(5)
 
@@ -80,8 +96,7 @@ def trade(pair):
 
 
 
-if __name__ == '__main__':
-	
-	pair = 'EVX/ETH'
+if __name__ == '__main__':	
+	pair = 'BNB/ETH'
 	trade(pair)
 	

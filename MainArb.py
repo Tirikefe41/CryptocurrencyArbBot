@@ -115,8 +115,8 @@ class Arbitrage:
 		else:
 			return[2]
 
-	def trade(self, response, _dpair):
-		pass
+	# def trade(self, response, _dpair):
+	# 	pass
 
 	def discountedopportunity(self,maxex, minex, pair, bqty, sp):
 
@@ -132,14 +132,13 @@ class Arbitrage:
 		# 		 = minfees['funding']['withdraw'][token]
 		# else:
 		# 	withdraw_fee = bqty * 0.002 # Update result from percentage pattern recognition.
-		if minex = 'hitbtc2':
-			withdraw_fee = self.exchanges.currencies[token]['fee']
+		if minex == 'hitbtc2':
+			withdraw_fee = self.exchanges[minex].currencies[token]['fee']
 		elif token in minfees['funding']['withdraw']:
-			withdraw = minfees['funding']['withdraw'][token]
+			withdraw_fee = minfees['funding']['withdraw'][token]
 		else:
 			withdraw_fee = bqty * 0.002
-
-		withdraw_fee = 
+ 
 		sqty = bqty - (purchase_fee+withdraw_fee)
 		deposit_fee = 0 #to be modified to realtime
 		sell_fee = maxfees['trading']['maker'] * sqty
@@ -148,6 +147,91 @@ class Arbitrage:
 		change = ((new_bal - self.fixedAmt)/self.fixedAmt) * 100
 
 		return change
+
+	def trade(pair):
+
+		exchange1 = exchange_dict[minex]
+		exchange2 = exchange_dict[maxex]
+		sym = pair.split('/')[0]
+
+		price1 = exchange1.fetch_ticker(pair)['ask']
+		balance1 = exchange1.fetch_balance()['free']['ETH']
+		buy_amt = exchange1.amount_to_precision(pair, (balance1 / price1)) # Tweaked amount using standard lot size
+		low_order = exchange1.create_order(pair, 'limit', 'buy',buy_amt, price1)
+		print('Placed Limit order to buy {} on {}'.format(sym, minex))
+
+		#Generate Destination address.	
+		address = exchange2.fetchDepositAddress(sym)['address']
+		print("Generated deposit address as {}".format(address))
+
+		#Track Opened order
+		if minex == 'binance':
+			low_order_stat = exchange1.fetch_order( low_order['id'], pair)
+		else:
+			low_order_stat = exchange1.fetch_order(low_order['id'])
+
+		while low_order_stat['status'] != 'closed':
+			if minex == 'binance':
+				low_order_stat = exchange1.fetch_order( low_order['id'], pair)
+			else:
+				low_order_stat = exchange1.fetch_order(low_order['id'])
+			print("Waiting for order to fill on {}....".format(minex))
+			time.sleep(5)
+
+		print("Bought {} on {}.".format(sym, minex))
+
+		if minex == 'hitbtc2':
+			min_bal = exchange1.fetch_balance()['free'][sym]
+			withdraw_amt = min_bal - exchange1.currencies[sym]['fee']
+			order1 = exchange1.private_post_account_transfer({'currency': sym, 'amount': min_bal, 'type': 'exchangeToBank'})
+		else:
+			withdraw_amt = exchange1.fetch_balance()['free'][sym]
+
+		# if minex == 'hitbtc2':
+		# 		#exchange1.payment_post_transfer_to_main ({'amount': withdraw_amt, 'currency_code': sym,})
+				
+		print("Initialing withdrawal...")
+		withdrawal = exchange1.withdraw(sym,withdraw_amt,address)
+		print("Withdrawal initated...")
+		time.sleep(60)
+		deposit_status = True
+
+		while deposit_status:
+			# confirm new symbol balance
+			print("Confirming Deposit on {}".format(maxex))
+			deposit_bal = exchange2.fetch_balance()['free'][sym]
+			if deposit_bal >= (withdraw_amt*0.8):
+				deposit_status = False
+				if maxex == 'hitbtc2':
+					order1 = exchange2.private_post_account_transfer({'currency': sym, 'amount': withdraw_amt, 'type': 'bankToExchange'})
+
+			time.sleep(5)
+
+		print('Deposit Successful !')
+		print("Selling {} on the high exchange".format(sym))
+
+		sell_price = exchange2.fetch_ticker(pair)['ask']
+		sell_amt = exchange2.amount_to_precision(pair, deposit_bal)
+		high_order = exchange2.create_order(pair, 'limit', 'sell',sell_amt, sell_price)
+
+		if maxex == 'binance':
+			high_order_stat = exchange2.fetch_order(high_order['id'], pair)
+		else:
+			high_order_stat = exchange2.fetch_order(high_order['id'])
+		
+
+		while high_order_stat['status'] != 'closed':
+			if maxex == 'binance':
+				high_order_stat = exchange2.fetch_order(high_order['id'], pair)
+			else:
+				high_order_stat = exchange2.fetch_order(high_order['id'])
+			print("Waiting for order to fill on {}....".format(maxex))
+			time.sleep(5)
+
+		print("Print Arbitrage Transaction completed !")
+		final_balance = exchange2.fetch_balance()['free']['ETH']
+		gain = (final_balance - balance1)/balance1
+		print("Gained {}percent ".format(gain*100))
 
 
 
