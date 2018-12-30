@@ -10,12 +10,13 @@ import ccxt
 
 class Arbitrage:
 
-	def __init__(self):
-		self.percenThresh = 1
+	def __init__(self, percenThresh, fixedAmt, maxtrades):
+		self.percenThresh = percenThresh
 		self.pairs = []
 		self.exchanges = {}
-		self.fixedAmt = 1
+		self.fixedAmt = fixedAmt
 		self.volumeThres = 20 # ETH Threshold for opportunity scan
+		self.maxtrades = maxtrades
 
 
 	def prepexchange(self):
@@ -83,7 +84,7 @@ class Arbitrage:
 				print("Pair {} from {}: {} to {}: {} for {}%\n".format(pair, res[2], priced[res[2]], res[1], priced[res[1]], res[4]))
 				print("Quote volume: {}".format(trackVol))
 				print("Trading... {} from {} to {}".format(pair, res[2], res[1]))
-				print("No funds Available to trade with !!\n")
+				self.trade(res[2], res[1], pair)
 			
 			elif res[0] == 2:
 				print("\nNone price value received from exchange")
@@ -107,7 +108,7 @@ class Arbitrage:
 			percentchg = ((maxprice - minprice)/minprice) * 100
 			dispercentchg = self.discountedopportunity(maxex, minex, _pair, buyqty, maxprice)
 
-			if percentchg > self.percenThresh and dVol[minex] > self.volumeThres and dVol[maxex] > self.volumeThres:
+			if dispercentchg > self.percenThresh and dVol[minex] > self.volumeThres and dVol[maxex] > self.volumeThres:
 				return [1, maxex, minex, percentchg, dispercentchg]
 
 			else: 
@@ -148,10 +149,10 @@ class Arbitrage:
 
 		return change
 
-	def trade(pair):
+	def trade(self,minex, maxex, pair):
 
-		exchange1 = exchange_dict[minex]
-		exchange2 = exchange_dict[maxex]
+		exchange1 = self.exchanges[minex]
+		exchange2 = self.exchange[maxex]
 		sym = pair.split('/')[0]
 
 		price1 = exchange1.fetch_ticker(pair)['ask']
@@ -233,9 +234,13 @@ class Arbitrage:
 		gain = (final_balance - balance1)/balance1
 		print("Gained {}percent ".format(gain*100))
 
+	def runARB(self):
+		self.prepexchange()
+
+		while True:
+			print("Rescanning for new opportunities...\n")
+			self.scanArb()
+			print("Waiting for 5minutes before rescanning...")
+			time.sleep(300)
 
 
-if __name__ =='__main__':
-	bot = Arbitrage()
-	bot.prepexchange()
-	bot.scanArb()

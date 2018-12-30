@@ -1,6 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, request, session, abort
-
-#from functions import *
+from MainArb import Arbitrage
 import json
 import os
 
@@ -17,18 +16,12 @@ def home():
     else:
         if request.method == "POST":
 
-            addr = request.form['apikey']
-            privy = request.form['apisecret']
-
-            pair = request.form['buy_percentage']
-            percentUP = float(request.form['sell_percentage'])
-            marketside = request.form['percent_range']
-            total   = float(request.form['fixedbuy'])
-            max_price = float(request.form['max_daily_trades'])
+            perc = float(request.form['sell_percentage'])
+            amt   = float(request.form['fixedbuy'])
+            max_trades = float(request.form['max_daily_trades'])
             
-            #print("Recieved parameters {}: {} \n {}: {} \n {}: {} \n {}: {} \n {}: {} \n {}: {} \n {}: {} \n".format(addr,type(addr), privy,type(privy), pair,type(pair), percentUP,type(percentUP), marketside,type(marketside), total,type(total), max_price, type(max_price)))
-            bot = TopOrderBot(addr, privy, pair, percentUP, marketside, total, max_price)
-            bot.TopOrderBook()
+            bot = Arbitrage(perc, amt, max_trades)
+            bot.runARB()
 
         return render_template('/index.html')
 
