@@ -14,7 +14,7 @@ def reverseTrade(sym, ex):
 	exchange = exchanges[ex]
 	amt = exchange.fetch_balance()['free'][sym]
 	price = exchange.fetch_ticker(pair)['ask']
-	buy_amt = exchange.amount_to_precision(pair, (amt/ price))
+	buy_amt = exchange.amount_to_precision(pair, (amt * price))
 	order = exchange.create_order(pair, 'limit', 'sell',buy_amt, price)
 	print('reversal order placed !')
 
