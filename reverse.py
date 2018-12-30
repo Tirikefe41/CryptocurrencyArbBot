@@ -15,9 +15,22 @@ def reverseTrade(sym, ex):
 	amt = exchange.fetch_balance()['free'][sym]
 	price = exchange.fetch_ticker(pair)['ask']
 	buy_amt = exchange.amount_to_precision(pair, (amt))
-	order = exchange.create_order(pair, 'limit', 'sell',buy_amt, price)
+	print(exchange.create_order(pair, 'market', 'sell',buy_amt))
 	print('reversal order placed !')
+
+def trackOpen(sym, ex):
+	pair = '{}/ETH'.format(sym)
+	exchange = exchanges[ex]
+	print(exchange.fetch_open_orders(pair))
+
+def cancelOrder(sym, ex, id):
+	pair = '{}/ETH'.format(sym)
+	exchange = exchanges[ex]
+	print(exchange.cancel_order(id, pair))
+
 
 
 if __name__ == '__main__':
 	reverseTrade('DENT', 'binance')
+	#trackOpen('DENT', 'binance')
+	#cancelOrder('DENT','binance',4821926)
