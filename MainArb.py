@@ -156,8 +156,8 @@ class Arbitrage:
 		sym = pair.split('/')[0]
 
 		price1 = exchange1.fetch_ticker(pair)['ask']
-		balance1 = exchange1.fetch_balance()['free']['ETH']
-		buy_amt = exchange1.amount_to_precision(pair, (balance1 / price1)) # Tweaked amount using standard lot size
+		#balance1 = exchange1.fetch_balance()['free']['ETH']
+		buy_amt = exchange1.amount_to_precision(pair, (self.fixedAmt/ price1)) # Tweaked amount using standard lot size
 		low_order = exchange1.create_order(pair, 'limit', 'buy',buy_amt, price1)
 		print('Placed Limit order to buy {} on {}'.format(sym, minex))
 
