@@ -4,6 +4,7 @@ from exchangeslist import exchanges
 from fastnumbers import fast_real
 from idex.client import Client
 from credentials import API
+from functions import jsonWrite
 import operator
 import time
 import ccxt
@@ -157,7 +158,10 @@ class Arbitrage:
 		sym = pair.split('/')[0]
 
 		price1 = exchange1.fetch_ticker(pair)['ask']
-		#balance1 = exchange1.fetch_balance()['free']['ETH']
+		balance1 = exchange1.fetch_balance()['free']['ETH']
+		balance2 = exchange2.fetch_balance()['free']['ETH']
+
+		jsonWrite('logs', {'Timestamp':time.now(),'Pair':pair, 'Buy Exchange':minex, 'Sell Exchange':maxex, 'Percentage Profit':'na', 'Status':'Transacting'})
 		buy_amt = exchange1.amount_to_precision(pair, (self.fixedAmt/ price1)) # Tweaked amount using standard lot size
 		low_order = exchange1.create_order(pair, 'limit', 'buy',buy_amt, price1)
 		print('Placed Limit order to buy {} on {}'.format(sym, minex))
@@ -201,11 +205,12 @@ class Arbitrage:
 		while deposit_status:
 			# confirm new symbol balance
 			print("Confirming Deposit on {}".format(maxex))
-			deposit_bal = exchange2.fetch_balance()['free'][sym]
+			deposit_bal = exchange2.fetch_balance({'type': 'account'})['free'][sym]
+
 			if deposit_bal >= (withdraw_amt*0.8):
 				deposit_status = False
 				if maxex == 'hitbtc2':
-					order1 = exchange2.private_post_account_transfer({'currency': sym, 'amount': withdraw_amt, 'type': 'bankToExchange'})
+					order1 = exchange2.private_post_account_transfer({'currency': sym, 'amount': deposit_bal, 'type': 'bankToExchange'})
 
 			time.sleep(5)
 
@@ -230,10 +235,12 @@ class Arbitrage:
 			print("Waiting for order to fill on {}....".format(maxex))
 			time.sleep(5)
 
-		print("Print Arbitrage Transaction completed !")
-		final_balance = exchange2.fetch_balance()['free']['ETH']
-		gain = (final_balance - balance1)/balance1
+		print("Arbitrage Transaction completed !")
+		initial_balance = balance1 + balance2
+		final_balance = exchange2.fetch_balance()['free']['ETH'] + exchange1.fetch_balance()['free']['ETH']
+		gain = (final_balance - initial_balance)/initial_balance
 		print("Gained {}percent ".format(gain*100))
+		jsonWrite('logs', {'Timestamp':time.now(),'Pair':pair, 'Buy Exchange':minex, 'Sell Exchange':maxex, 'Percentage Profit':gain*100, 'Status':'completed'})
 
 	def runARB(self):
 		self.prepexchange()
