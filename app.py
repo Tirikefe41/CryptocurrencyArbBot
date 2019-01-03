@@ -16,9 +16,9 @@ def home():
 
             perc = float(request.form['sell_percentage'])
             amt   = float(request.form['fixedbuy'])
-            max_trades = float(request.form['max_daily_trades'])
+            vol_thres = float(request.form['max_daily_trades'])
             
-            bot = Arbitrage(perc, amt, max_trades)
+            bot = Arbitrage(perc, amt, vol_thres)
             bot.runARB()
 
         return render_template('/index.html')

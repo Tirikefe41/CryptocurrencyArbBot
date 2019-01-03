@@ -12,13 +12,13 @@ import ccxt
 
 class Arbitrage:
 
-	def __init__(self, percenThresh, fixedAmt, maxtrades):
+	def __init__(self, percenThresh, fixedAmt, volumeThres):
 		self.percenThresh = percenThresh
 		self.pairs = []
 		self.exchanges = {}
 		self.fixedAmt = fixedAmt
-		self.volumeThres = 20 # ETH Threshold for opportunity scan
-		self.maxtrades = maxtrades
+		self.volumeThres = volumeThres # ETH Threshold for opportunity scan
+		self.maxtrades = 100
 
 
 	def prepexchange(self):
